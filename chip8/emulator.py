@@ -11,7 +11,9 @@ TIMER = pygame.USEREVENT + 1
 from chip8.config import FONT_FILE, DELAY_INTERVAL
 from chip8.cpu import Chip8CPU
 from chip8.screen import Chip8Screen
-
+from chip8.state import State
+import pickle
+from copy import deepcopy
 # C O N S T A N T S ###########################################################
 
 # A simple timer event used for the delay and sound timers
@@ -52,5 +54,26 @@ def main_loop(args):
                 if keys_pressed[pygame.K_ESCAPE]:
                     print("Initiating debug mode")
                     cpu.debug = True
+                elif keys_pressed[pygame.K_F5]:
+                    print("Saving state...")
+                    cpu.screen=None
+                    state=State(deepcopy(cpu),screen.save_state()[0],screen.save_state()[1])
+                    cpu.screen=screen
+                    print(args.rom)
+                    print(args.rom.split("/")[-1]+"_state.dat")
+                    with open(args.rom.split("/")[-1]+"_state.dat","wb") as f:
+                        pickle.dump(state,f)
+                elif keys_pressed[pygame.K_F7]:
+                    print("Loading state...")
+                    try:
+                        with open(args.rom.split("/")[-1]+"_state.dat","rb") as f:
+                            state=pickle.load(f)
+                    except OSError:
+                        print("No state file found")
+                    else:
+                        cpu=state.cpu
+                        cpu.screen=screen
+                        screen.load_state(state.scale_factor,state.screen_array)
+                    
 
 # E N D   O F   F I L E #######################################################

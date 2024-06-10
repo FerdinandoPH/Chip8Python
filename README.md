@@ -9,6 +9,7 @@ I (FerdinandoPH) cloned craigthomas' Yet Another (Super) Chip 8 Emulator and mad
 + Added a window to select the ROM instead of having to type the path in the command line
 + Added a debugger
 + Added sound
++ Added save states
 
 
 <br>
