@@ -232,9 +232,11 @@ class Chip8Screen(object):
         for y_pos in range(self.height):
             for x_pos in range(self.width):
                 pixels.append(self.get_pixel(x_pos, y_pos))
-        return (self.scale_factor,pixels)
-    def load_state(self,scale_factor,pixels):
+        return (self.scale_factor,self.width,self.height,pixels)
+    def load_state(self,scale_factor,width,height,pixels):
         self.scale_factor=scale_factor
+        self.height=height
+        self.width=width
         self.destroy()
         self.init_display(True)
         for y_pos in range(self.height):

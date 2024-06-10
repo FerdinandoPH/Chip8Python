@@ -57,7 +57,7 @@ def main_loop(args):
                 elif keys_pressed[pygame.K_F5]:
                     print("Saving state...")
                     cpu.screen=None
-                    state=State(deepcopy(cpu),screen.save_state()[0],screen.save_state()[1])
+                    state=State(deepcopy(cpu),screen.save_state()[0],screen.save_state()[1],screen.save_state()[2],screen.save_state()[3])
                     cpu.screen=screen
                     print(args.rom)
                     print(args.rom.split("/")[-1]+"_state.dat")
@@ -73,7 +73,7 @@ def main_loop(args):
                     else:
                         cpu=state.cpu
                         cpu.screen=screen
-                        screen.load_state(state.scale_factor,state.screen_array)
+                        screen.load_state(state.scale_factor,state.width,state.height,state.screen_array)
                     
 
 # E N D   O F   F I L E #######################################################
