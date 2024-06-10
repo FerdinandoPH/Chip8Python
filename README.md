@@ -1,7 +1,7 @@
 I (FerdinandoPH) cloned craigthomas' Yet Another (Super) Chip 8 Emulator and made some fixes and features to it.
 ### Fixes
 - Timers now work correctly in SUPER CHIP-8 mode
-- Substracting 1-1 doesn't underflow to 0x100 anymore, now it stays at 0x0
+- Substracting two registers with equal values doesn't make the result underflow to 0x100 anymore, now it stays at 0x0
 - Added the SUPER CHIP-8 font
 
 ### Features
