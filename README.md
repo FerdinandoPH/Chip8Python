@@ -1,11 +1,24 @@
+I (FerdinandoPH) cloned craigthomas' Yet Another (Super) Chip 8 Emulator and made some fixes and features to it.
+### Fixes
+- Timers now work correctly in SUPER CHIP-8 mode
+- Substracting 1-1 doesn't underflow to 0x100 anymore, now it stays at 0x0
+- Added the SUPER CHIP-8 font
+
+### Features
++ Some operations behave differently in newer interpreters, so I added a flag to switch between the old and new behaviors
++ Added a window to select the ROM instead of having to type the path in the command line
++ Added a debugger
++ Added sound
+
+
+<br>
+<br>
+
+This is the original README.md file from craigthomas' repository:
+
+---
+
 # Yet Another (Super) Chip 8 Emulator
-
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/craigthomas/Chip8Python/python-app.yml?style=flat-square&branch=main)](https://github.com/craigthomas/Chip8Python/actions)
-[![Codecov](https://img.shields.io/codecov/c/gh/craigthomas/Chip8Python?style=flat-square)](https://codecov.io/gh/craigthomas/Chip8Python) 
-[![Dependencies](https://img.shields.io/librariesio/github/craigthomas/Chip8Python?style=flat-square)](https://libraries.io/github/craigthomas/Chip8Python)
-[![Releases](https://img.shields.io/github/release/craigthomas/Chip8Python?style=flat-square)](https://github.com/craigthomas/Chip8Python/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-
 
 ## Table of Contents
 
