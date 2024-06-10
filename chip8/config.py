@@ -14,29 +14,29 @@ import pygame
 MAX_MEMORY = 4096
 
 # Where the stack pointer should originally point
-STACK_POINTER_START = 0x52
+STACK_POINTER_START = 0xF0
 
 # Where the program counter should originally point
 PROGRAM_COUNTER_START = 0x200
 
 # Sets which keys on the keyboard map to the Chip 8 keys
 KEY_MAPPINGS = {
-    0x0: pygame.K_g,
-    0x1: pygame.K_4,
-    0x2: pygame.K_5,
-    0x3: pygame.K_6,
-    0x4: pygame.K_7,
-    0x5: pygame.K_r,
-    0x6: pygame.K_t,
-    0x7: pygame.K_y,
-    0x8: pygame.K_u,
-    0x9: pygame.K_f,
-    0xA: pygame.K_h,
-    0xB: pygame.K_j,
-    0xC: pygame.K_v,
-    0xD: pygame.K_b,
-    0xE: pygame.K_n,
-    0xF: pygame.K_m,
+    0x0: pygame.K_x,
+    0x1: pygame.K_1,
+    0x2: pygame.K_2,
+    0x3: pygame.K_3,
+    0x4: pygame.K_q,
+    0x5: pygame.K_w,
+    0x6: pygame.K_e,
+    0x7: pygame.K_a,
+    0x8: pygame.K_s,
+    0x9: pygame.K_d,
+    0xA: pygame.K_z,
+    0xB: pygame.K_c,
+    0xC: pygame.K_4,
+    0xD: pygame.K_r,
+    0xE: pygame.K_f,
+    0xF: pygame.K_v,
 }
 
 # The font file to use

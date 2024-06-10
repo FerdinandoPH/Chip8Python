@@ -7,7 +7,7 @@ A simple Chip 8 emulator - see the README file for more information.
 # I M P O R T S ###############################################################
 
 import unittest
-
+import sys
 from chip8.screen import (
     Chip8Screen, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_MODE_NORMAL
 )

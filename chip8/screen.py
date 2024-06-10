@@ -7,7 +7,9 @@ A Chip 8 Screen - see the README file for more information.
 # I M P O R T S ###############################################################
 
 from pygame import display, HWSURFACE, DOUBLEBUF, Color, draw
-
+import pygame
+from chip8.emulator import TIMER
+from chip8.config import DELAY_INTERVAL
 # C O N S T A N T S ###########################################################
 
 # Various screen modes
@@ -65,7 +67,7 @@ class Chip8Screen(object):
         self.scale_factor = scale_factor
         self.surface = None
 
-    def init_display(self):
+    def init_display(self,was_destroyed=False):
         """
         Attempts to initialize a screen with the specified height and width.
         The screen will by default be of depth SCREEN_DEPTH, and will be
@@ -80,6 +82,8 @@ class Chip8Screen(object):
         display.set_caption('CHIP8 Emulator')
         self.clear_screen()
         self.update()
+        if was_destroyed:
+            pygame.time.set_timer(TIMER, DELAY_INTERVAL)
 
     def draw_pixel(self, x_pos, y_pos, pixel_color):
         """
@@ -163,7 +167,7 @@ class Chip8Screen(object):
         self.destroy()
         self.height = SCREEN_HEIGHT[SCREEN_MODE_EXTENDED]
         self.width = SCREEN_WIDTH[SCREEN_MODE_EXTENDED]
-        self.init_display()
+        self.init_display(was_destroyed=True)
 
     def set_normal(self):
         """
@@ -172,7 +176,7 @@ class Chip8Screen(object):
         self.destroy()
         self.height = SCREEN_HEIGHT[SCREEN_MODE_NORMAL]
         self.width = SCREEN_WIDTH[SCREEN_MODE_NORMAL]
-        self.init_display()
+        self.init_display(was_destroyed=True)
 
     def scroll_down(self, num_lines):
         """

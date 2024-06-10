@@ -10,7 +10,8 @@ import pygame
 
 from pygame import key
 from random import randint
-
+from .sound import SquareWavePlayer
+audioManager=SquareWavePlayer(440)
 from chip8.config import (
     MAX_MEMORY, STACK_POINTER_START, KEY_MAPPINGS, PROGRAM_COUNTER_START
 )
@@ -55,7 +56,7 @@ class Chip8CPU(object):
 
     ** VF is a special register - it is used to store the overflow bit
     """
-    def __init__(self, screen):
+    def __init__(self, screen,modern=False,delay=None):
         """
         Initialize the Chip8 CPU. The only required parameter is a screen
         object that supports the draw_pixel function. For testing purposes,
@@ -135,19 +136,29 @@ class Chip8CPU(object):
             0x75: self.store_regs_in_rpl,                    # Fs75 - SRPL Vs
             0x85: self.read_regs_from_rpl,                   # Fs85 - LRPL Vs
         }
+        self.breakpoints=[]
+        self.op_breakpoints=[]
         self.operand = 0
+        self.debug=False
         self.mode = MODE_NORMAL
         self.screen = screen
+        self.modern=modern
         self.memory = bytearray(MAX_MEMORY)
         self.reset()
         self.running = True
+        if delay is not None:
+            self.op_delay = delay
 
     def __str__(self):
-        val = 'PC: {:4X}  OP: {:4X}\n'.format(
-            self.registers['pc'] - 2, self.operand)
+        val=""
         for index in range(0x10):
-            val += 'V{:X}: {:2X}\n'.format(index, self.registers['v'][index])
-        val += 'I: {:4X}\n'.format(self.registers['index'])
+            val += 'V{:X}: {:2X}, '.format(index, self.registers['v'][index])
+        val += '\nI: {:04X}, '.format(self.registers['index'])
+        val += 'SP: {:04X}, '.format(self.registers['sp'])
+        val += 'DT: {:02X}, '.format(self.timers['delay'])
+        val += 'ST: {:02X}'.format(self.timers['sound'])
+        val += '\nPC: {:04X}  OP: {:04X}\n'.format(
+            self.registers['pc'], self.operand)
         return val
 
     def execute_instruction(self, operand=None):
@@ -166,9 +177,83 @@ class Chip8CPU(object):
             self.operand = int(self.memory[self.registers['pc']])
             self.operand = self.operand << 8
             self.operand += int(self.memory[self.registers['pc'] + 1])
+            if self.registers['pc'] in self.breakpoints or self.operand in self.op_breakpoints:
+                print("Breakpoint at {:04X}".format(self.registers['pc']))
+                self.debug=True
+            if self.debug:
+                print(self)
+                exit=False
+                while not exit:
+                    accion=input()
+                    if len(accion)==0:
+                        exit=True
+                    elif accion[0]=="m": #Display memory
+                        accion=accion.split(" ")
+                        accion.pop(0)
+                        accion[0]=int(accion[0],16)
+                        accion[1]=int(accion[1])
+                        if len(accion)<3:
+                            if len(accion)<2:
+                                accion.append(1)
+                            for i in range (accion[1]):
+                                print("{:04X} : {:02X} ".format(accion[0]+i,self.memory[accion[0]+i]),end=", ")
+                            print()
+                    elif accion[0]=="a":
+                        accion=accion.split(" ")
+                        accion.pop(0)
+                        if accion[0]=="i":
+                            self.breakpoints.append(int(accion[1],16))
+                            print("Instruction breakpoint added at {:04X}".format(int(accion[1],16)))
+                        elif accion[0]=="o":
+                            self.op_breakpoints.append(int(accion[1],16))
+                            print("Opcode breakpoint added at {:04X}".format(int(accion[1],16)))
+                        else:
+                            print("Invalid command")
+                    elif accion[0]=="d":
+                        accion=accion.split(" ")
+                        accion.pop(0)
+                        if accion[0]=="i":
+                            try:
+                                self.breakpoints.remove(int(accion[1],16))
+                                print("Instruction breakpoint removed at {:04X}".format(int(accion[1],16)))
+                            except ValueError:
+                                print("Instruction breakpoint not found")
+                        elif accion[0]=="o":
+                            try:
+                                self.op_breakpoints.remove(int(accion[1],16))
+                                print("Opcode breakpoint removed at {:04X}".format(int(accion[1],16)))
+                            except ValueError:
+                                print("Opcode breakpoint not found")
+                        else:
+                            print("Invalid command")
+                    elif accion[0]=="p":
+                        print("Instruction breakpoints: ",list(map(lambda x: format(x,"04X"),self.breakpoints)))
+                        print("Opcode breakpoints: ",list(map(lambda x: format(x,"04X"),self.op_breakpoints)))
+                    elif accion[0]=="r":
+                        print(self)
+                    elif accion[0]=="c":
+                        print("Continuing...")
+                        self.debug=False
+                        exit=True
+                    elif accion[0]=="q":
+                        print("Quitting...")
+                        self.running=False
+                        exit=True
+                    elif accion[0]=="i":
+                        print("Initiating python debugger...")
+                        exit=True # Add a breakpoint here
+                    elif accion[0]=="l":
+                        if len(accion)==1:
+                            print("Current delay: ",self.op_delay)
+                        else:
+                            self.op_delay=int(accion[2:])
+                            print("Delay set to ",self.op_delay)
+                    else:
+                        exit=True
             self.registers['pc'] += 2
         operation = (self.operand & 0xF000) >> 12
         self.operation_lookup[operation]()
+
         return self.operand
 
     def execute_logical_instruction(self):
@@ -179,7 +264,8 @@ class Chip8CPU(object):
         operation = self.operand & 0x000F
         try:
             self.logical_operation_lookup[operation]()
-        except KeyError:
+        except KeyError as e:
+            print(e)
             raise UnknownOpCodeException(self.operand)
 
     def keyboard_routines(self):
@@ -211,7 +297,7 @@ class Chip8CPU(object):
                 self.registers['pc'] += 2
 
         # Skip if the key specified in the source register is not pressed
-        if operation == 0xA1:
+        elif operation == 0xA1:
             if not keys_pressed[KEY_MAPPINGS[key_to_check]]:
                 self.registers['pc'] += 2
 
@@ -222,7 +308,8 @@ class Chip8CPU(object):
         operation = self.operand & 0x00FF
         try:
             self.misc_routine_lookup[operation]()
-        except KeyError:
+        except KeyError as e:
+            print(e)
             raise UnknownOpCodeException(self.operand)
 
     def clear_return(self):
@@ -245,25 +332,26 @@ class Chip8CPU(object):
             num_lines = self.operand & 0x000F
             self.screen.scroll_down(num_lines)
 
-        if operation == 0x00E0:
+        elif operation == 0x00E0:
             self.screen.clear_screen()
 
-        if operation == 0x00EE:
+        elif operation == 0x00EE:
             self.return_from_subroutine()
 
-        if operation == 0x00FB:
+        elif operation == 0x00FB:
             self.screen.scroll_right()
 
-        if operation == 0x00FC:
+        elif operation == 0x00FC:
             self.screen.scroll_left()
 
-        if operation == 0x00FD:
+        elif operation == 0x00FD:
             self.running = False
+            print("HALT requested")
 
-        if operation == 0x00FE:
+        elif operation == 0x00FE:
             self.disable_extended_mode()
 
-        if operation == 0x00FF:
+        elif operation == 0x00FF:
             self.enable_extended_mode()
 
     def return_from_subroutine(self):
@@ -485,7 +573,7 @@ class Chip8CPU(object):
         source = (self.operand & 0x00F0) >> 4
         source_reg = self.registers['v'][source]
         target_reg = self.registers['v'][target]
-        if target_reg > source_reg:
+        if target_reg >= source_reg:
             target_reg -= source_reg
             self.registers['v'][0xF] = 1
         else:
@@ -508,7 +596,7 @@ class Chip8CPU(object):
         source = (self.operand & 0x0F00) >> 8
         target = (self.operand & 0x00F0) >> 4
         bit_zero = self.registers['v'][source] & 0x1
-        self.registers['v'][target] = self.registers['v'][source] >> 1
+        self.registers['v'][target if not self.modern else source] = self.registers['v'][source] >> 1
         self.registers['v'][0xF] = bit_zero
 
     def subtract_reg_from_reg1(self):
@@ -528,7 +616,7 @@ class Chip8CPU(object):
         source = (self.operand & 0x00F0) >> 4
         source_reg = self.registers['v'][source]
         target_reg = self.registers['v'][target]
-        if source_reg > target_reg:
+        if source_reg >= target_reg:
             target_reg = source_reg - target_reg
             self.registers['v'][0xF] = 1
         else:
@@ -551,7 +639,7 @@ class Chip8CPU(object):
         source = (self.operand & 0x0F00) >> 8
         target = (self.operand & 0x00F0) >> 4
         bit_seven = (self.registers['v'][source] & 0x80) >> 8
-        self.registers['v'][target] = self.registers['v'][source] << 1
+        self.registers['v'][target if not self.modern else source] = self.registers['v'][source] << 1
         self.registers['v'][0xF] = bit_seven
 
     def skip_if_reg_not_equal_reg(self):
@@ -595,7 +683,10 @@ class Chip8CPU(object):
            Bits:  15-12     11-8      7-4       3-0
                   unused   address  address  address
         """
-        self.registers['pc'] = self.registers['index'] + (self.operand & 0x0FFF)
+        if not self.modern:
+            self.registers['pc'] = self.registers['v'][0] + (self.operand & 0x0FFF)
+        else:
+            self.registers['pc'] = self.registers['v'][(self.operand >> 12) & 0x0F00] + (self.operand & 0x00FF)
 
     def generate_random_number(self):
         """
@@ -822,7 +913,7 @@ class Chip8CPU(object):
                   unused    source     2         9
         """
         source = (self.operand & 0x0F00) >> 8
-        self.registers['index'] = self.registers['v'][source] * 10
+        self.registers['index'] = self.registers['v'][source] * 10 +80
 
     def add_reg_into_index(self):
         """
@@ -901,8 +992,8 @@ class Chip8CPU(object):
         """
         source = (self.operand & 0x0F00) >> 8
         for counter in range(source + 1):
-            self.registers['v'][counter] = \
-                    self.memory[self.registers['index'] + counter]
+            self.registers['v'][counter] = self.memory[self.registers['index'] + counter]
+            self.registers['index']+=1 if not self.modern else 0
 
     def store_regs_in_rpl(self):
         """
@@ -973,7 +1064,13 @@ class Chip8CPU(object):
             self.timers['delay'] -= 1
 
         if self.timers['sound'] != 0:
+            if not audioManager.playing:
+                audioManager.start()
             self.timers['sound'] -= 1
+        else:
+            if audioManager.playing:
+                audioManager.stop()
+                #self.debug=True
 
     def enable_extended_mode(self):
         """
