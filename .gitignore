@@ -1,2 +1,4 @@
 *.pyc
 .idea
+*.dat
+*.ch8
