@@ -7,9 +7,9 @@ I (FerdinandoPH) cloned craigthomas' Yet Another (Super) Chip 8 Emulator and mad
 ### Features
 + Some operations behave differently in newer interpreters, so I added a flag to switch between the old and new behaviors
 + Added a window to select the ROM instead of having to type the path in the command line
-+ Added a debugger
++ Added a debugger (pressing esc)
 + Added sound
-+ Added save states
++ Added save states (F5 to save, F7 to load)
 
 
 <br>

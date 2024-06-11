@@ -59,8 +59,6 @@ def main_loop(args):
                     cpu.screen=None
                     state=State(deepcopy(cpu),screen.save_state()[0],screen.save_state()[1],screen.save_state()[2],screen.save_state()[3])
                     cpu.screen=screen
-                    print(args.rom)
-                    print(args.rom.split("/")[-1]+"_state.dat")
                     with open(args.rom.split("/")[-1]+"_state.dat","wb") as f:
                         pickle.dump(state,f)
                 elif keys_pressed[pygame.K_F7]:
